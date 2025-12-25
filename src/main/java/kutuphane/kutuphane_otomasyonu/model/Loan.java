@@ -1,6 +1,7 @@
 package kutuphane.kutuphane_otomasyonu.model;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -17,7 +18,7 @@ public class Loan {
 @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long loanId;
-    // Hangi Kitap? (Bir ödünç işleminde 1 kitap olur)
+    // Hangi Kitap(Bir ödünç işleminde 1 kitap olur)
     @ManyToOne
     @JoinColumn(name = "book_id", nullable = false)
     private Book book;
@@ -25,10 +26,9 @@ public class Loan {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private Users user;
-
     private LocalDate loanDate;   // Verildiği tarih
-    private LocalDate dueDate;    // Teslim edilmesi gereken tarih
-    private LocalDate returnDate; // Geri getirildiği tarih (Başlangıçta boş olabilir)
+    private LocalDateTime dueDate;    // Teslim edilmesi gereken tarih
+    private LocalDateTime returnDate; // Geri getirildiği tarih (Başlangıçta boş olabilir)
 
     public Loan() {
     }
@@ -66,19 +66,19 @@ public class Loan {
         this.loanDate = loanDate;
     }
 
-    public LocalDate getDueDate() {
+    public LocalDateTime getDueDate() {
         return dueDate;
     }
 
-    public void setDueDate(LocalDate dueDate) {
+    public void setDueDate(LocalDateTime dueDate) {
         this.dueDate = dueDate;
     }
 
-    public LocalDate getReturnDate() {
+    public LocalDateTime getReturnDate() {
         return returnDate;
     }
 
-    public void setReturnDate(LocalDate returnDate) {
+    public void setReturnDate(LocalDateTime returnDate) {
         this.returnDate = returnDate;
     }
 }

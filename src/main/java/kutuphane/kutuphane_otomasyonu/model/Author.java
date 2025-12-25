@@ -3,6 +3,8 @@ package kutuphane.kutuphane_otomasyonu.model;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity; // Bu sınıfın bir veritabanı varlığı (tablosu) olduğunu belirtmek için
 import jakarta.persistence.GeneratedValue; // ID'lerin nasıl üretileceğini (örn: otomatik artan) belirlemek için
@@ -29,6 +31,7 @@ public Author(Long author_ID, String name, String biography) {
 public Author() {
 }
 @ManyToMany(mappedBy = "authors")
+@JsonIgnore
     private Set<Book> books = new HashSet<>();
 
     // Getter ve Setter
