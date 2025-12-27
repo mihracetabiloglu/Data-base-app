@@ -15,7 +15,7 @@ public class Penalties {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long penalty_ID;
-
+    private boolean is_paid = false;
 	private Double penalty_amount;
 	private String penalty_reason;
 
@@ -31,7 +31,13 @@ public class Penalties {
 		this.penalty_reason = penalty_reason;
 		this.loan = loan;
 	}
+    public boolean isIs_paid() {
+    return is_paid;
+}
 
+public void setIs_paid(boolean is_paid) {
+    this.is_paid = is_paid;
+}
 	public Long getPenalty_ID() {
 		return penalty_ID;
 	}

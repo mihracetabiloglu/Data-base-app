@@ -89,25 +89,25 @@ public Loan oduncAl(Long bookId, Long userId) {
 
     // Süre aşımı kontrolü
     if (loan.getReturnDate().isAfter(loan.getDueDate())) {
-
-        long lateDays = ChronoUnit.DAYS.between(
-                loan.getDueDate(),
-                loan.getReturnDate()
-        );
-
-        double penaltyAmount = lateDays * 10; // günlük 10 TL ceza
+        long lateMinutes = ChronoUnit.MINUTES.between(loan.getDueDate(), loan.getReturnDate());
+        double penaltyAmount = lateMinutes * 10; // günlük 10 TL ceza
 
        Penalties penalty = new Penalties();
     penalty.setLoan(loan);
     penalty.setPenalty_amount(penaltyAmount);
-    penalty.setPenalty_reason("Kitap " + lateDays + " dakika geç teslim edildi");
-         penaltiesRepository.save(penalty);
+    penalty.setPenalty_reason("Kitap " + lateMinutes + " dakika geç teslim edildi");
+    penalty.setIs_paid(false);
+    penaltiesRepository.save(penalty);
     }
 
     bookRepository.save(book);
     loanRepository.save(loan);
     
 }
+
+    public Object getAllLoans() {
+        return loanRepository.findAll();
+    }
 
 
 }

@@ -44,4 +44,13 @@ public class PenaltiesController {
         penaltiesService.deletePenalties(id);
         return ResponseEntity.ok().build();
     }
+@PutMapping("/pay/{penaltyId}")
+public ResponseEntity<?> pay(@PathVariable Long penaltyId) {
+    try {
+        penaltiesService.cezaOde(penaltyId);
+        return ResponseEntity.ok("Ceza ödendi olarak güncellendi.");
+    } catch (Exception e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+}
 }

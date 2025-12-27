@@ -16,7 +16,7 @@ public class UsersService {
         this.userRepository = userRepository;
     }
 
-    // 👤 KULLANICI KAYIT (NORMAL USER)
+    //  KULLANICI KAYIT (NORMAL USER)
     public Users registerUser(Users user) {
 
         // Email kontrolü

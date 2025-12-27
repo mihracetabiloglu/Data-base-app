@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
+
+import jakarta.transaction.Transactional;
 import kutuphane.kutuphane_otomasyonu.Repository.PenaltiesRepostory;
 import kutuphane.kutuphane_otomasyonu.model.Penalties;
 
@@ -20,7 +22,14 @@ public class PenaltiesService {
     public List<Penalties> getAllPenalties() {
         return penaltiesRepository.findAll();
     }
-
+    
+   @Transactional
+public void cezaOde(Long penaltyId) {
+    Penalties penalty = penaltiesRepository.findById(penaltyId)
+            .orElseThrow(() -> new RuntimeException("Ceza bulunamadı"));
+    penalty.setIs_paid(true); // Cezayı ödendi olarak işaretle
+    penaltiesRepository.save(penalty);
+}
     public Penalties getPenaltiesById(Long id) {
         return penaltiesRepository.findById(id).orElse(null);
     }

@@ -3,41 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <title>Kütüphane Giriş</title>
+    <style>
+        body {
+             font-family: sans-serif; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    height: 100vh; 
+    margin: 0;
+    /* Arka plan ayarları */
+    background-image: url('img/Kütüphanegirişarkaplan.jpg'); /* Buraya resmin yolunu yaz */
+    background-size: cover; /* Resmi tüm ekrana yayar */
+    background-position: center; /* Resmi ortalar */
+    background-repeat: no-repeat; /* Resmin tekrarlanmasını önler */
+    background-attachment: fixed; /* Sayfa kaysa bile resim sabit kalır */
+        }
+        .login-card { background: rgba(255, 226, 203, 0.419); padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 350px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #6a452b; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
 </head>
 <body>
+    <div class="login-card">
+        <h2>Giriş Yap</h2>
+        <input type="email" id="email" placeholder="E-posta (mihracetabiloglu@gmail.com)" required>
+        <input type="password" id="password" placeholder="Şifre" required>
+        <button onclick="handleLogin()">Giriş</button>
+    </div>
 
-<h2>Kullanıcı Girişi</h2>
+    <script>
+        async function handleLogin() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
 
-<form id="loginForm">
-    <input type="email" id="email" placeholder="Email" required><br><br>
-    <input type="password" id="password" placeholder="Şifre" required><br><br>
-    <button type="submit">Giriş Yap</button>
-</form>
+    try {
+        const response = await fetch('http://localhost:8080/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
 
-<p id="error" style="color:red;"></p>
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Backend'den gelen veriyi konsolda görerek emin olalım
+            console.log("Gelen veri:", data);
 
-<script>
-document.getElementById("loginForm").addEventListener("submit", async function(e) {
-    e.preventDefault();
+            // Token'ı ve Rolü güvenli bir şekilde alalım
+            // Backend "ROLE_ADMIN" veya "ADMIN" dönebilir, ikisine de bakalım
+            const receivedToken = data.token || (typeof data === 'string' ? data : null);
+            const receivedRole = data.role;
 
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-
-    const response = await fetch("/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-    });
-
-    if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem("token", data.token);
-        window.location.href = "/index.html";
-    } else {
-        document.getElementById("error").innerText = "Giriş başarısız";
+            if (receivedToken) {
+                localStorage.setItem('token', receivedToken);
+                localStorage.setItem('role', receivedRole);
+                
+                // Yönlendirme (Backend'den gelen ROLE_ kısmına dikkat!)
+                if (receivedRole === 'ADMIN' || receivedRole === 'ROLE_ADMIN') {
+                    window.location.href = 'admin.html';
+                } else {
+                    window.location.href = 'users.html';
+                }
+            } else {
+                alert("Token alınamadı, backend yanıtını kontrol edin.");
+            }
+        } else {
+            alert("Giriş başarısız! Bilgilerinizi kontrol edin.");
+        }
+    } catch (error) {
+        console.error("Hata:", error);
+        alert("Sunucuya bağlanılamadı.");
     }
-});
-</script>
-
+}
+    </script>
 </body>
 </html>

@@ -34,3 +34,13 @@ function borrow(bookId) {
   .then(res => res.text())
   .then(alert);
 }
+async function searchBook() {
+    const name = document.getElementById('searchInput').value;
+    if (name.length < 2) { loadBooks(); return; } // Arama kutusu boşsa tümünü getir
+
+    const response = await fetch(`http://localhost:8080/api/books/search?name=${name}`);
+    const books = await response.json();
+    
+    // Kitap kartlarını güncelleyen kod... (daha önce yazdığımız innerHTML kısmı)
+    displayBooks(books); 
+}

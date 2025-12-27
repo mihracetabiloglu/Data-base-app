@@ -23,7 +23,7 @@ public class JwtUtil {
                 .setSubject(user.getEmail())
                 .claim("role", user.getRole()) // ROLE_USER / ROLE_ADMIN
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 7))
                 .signWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()),
                           SignatureAlgorithm.HS256)
                 .compact();

@@ -3,6 +3,7 @@ package kutuphane.kutuphane_otomasyonu.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import kutuphane.kutuphane_otomasyonu.model.Loan;
@@ -14,7 +15,11 @@ public class LoanController {
 
     @Autowired
     private LoanService loanService;
-
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/tumoduncler")
+    public ResponseEntity<?> getAllLoans() {
+        return ResponseEntity.ok(loanService.getAllLoans());
+    }
     // Kitap Ödünç Al -> POST http://localhost:8080/api/loans/borrow?bookId=1&userId=1
     @PostMapping("/borrow")
     public ResponseEntity<?> borrowBook(@RequestParam Long bookId, @RequestParam Long userId) {

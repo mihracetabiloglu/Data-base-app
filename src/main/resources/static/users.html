@@ -1,8 +1,70 @@
-<h2>Kullanıcı Paneli</h2>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Kitap Listesi</title>
+    <style>
+        body { font-family: sans-serif; background: #e9ecef; padding: 20px; }
+        .book-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .card { background: white; padding: 15px; border-radius: 8px; text-align: center; }
+        .btn-borrow { background: #17a2b8; color: white; border: none; padding: 8px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Hoş Geldiniz</h2>
+    <div id="books" class="book-list"></div>
 
-<input type="text" id="search" placeholder="Kitap adı">
-<button onclick="searchBook()">Ara</button>
+    <script>
+        async function loadBooks() {
+            const response = await fetch('http://localhost:8080/api/books');
+            const books = await response.json();
+            document.getElementById('books').innerHTML = books.map(b => `
+                <div class="card">
+                    <h4>${b.title}</h4>
+                    <p>Mevcut: ${b.available_copies}</p>
+                    <button class="btn-borrow" onclick="borrow(${b.bookId})">Ödünç Al</button>
+                </div>
+            `).join("");
+        }
+        // KİTAP ÖDÜNÇ ALMA (POST İŞLEMİ)
+    async function borrowBook(bookId) {
+        // Backend'de userId parametresi de gerekiyordu
+        // Şimdilik test için userId=1 diyelim, normalde login olan kullanıcının ID'si olmalı
+        const userId = 1; //
 
-<ul id="bookList"></ul>
+        try {
+            const response = await fetch(`http://localhost:8080/api/loans/borrow?bookId=${bookId}&userId=${userId}`, {
+                method: 'POST',
+                headers: { 
+                    'Authorization': 'Bearer ' + token 
+                }
+            });
 
-<script src="js/user.js"></script>
+            if (response.ok) {
+                alert("Kitap başarıyla ödünç alındı!");
+                loadBooks(); // Listeyi güncelle (kopya sayısı düşsün)
+            } else {
+                const errorMsg = await response.text();
+                alert("Hata: " + errorMsg);
+            }
+        } catch (error) {
+            console.error("İstek hatası:", error);
+        }
+    }
+    async function returnBook(loanId) {
+    const response = await fetch(`http://localhost:8080/api/loans/return/${loanId}`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token }
+    });
+
+    if (response.ok) {
+        alert("Kitap iade edildi.");
+        // Gerekli listeleri yenile
+    }
+}
+
+        loadBooks();
+    </script>
+    <input type="text" id="searchInput" placeholder="Kitap ara..." onkeyup="searchBook()">
+</body>
+</html>

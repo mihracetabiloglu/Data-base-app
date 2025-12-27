@@ -1,7 +1,444 @@
-<h2>Admin Panel</h2>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Paneli</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background: #f4f7f6; }
+        nav { background: #333; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .container { padding: 20px; }
+        .section { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .tab-container { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { padding: 10px 20px; cursor: pointer; background: #ddd; border: none; border-radius: 5px; font-weight: bold; }
+        .tab-btn.active { background: #007bff; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f8f9fa; }
+        input { padding: 8px; margin-right: 5px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 5px; }
+        .btn-add { background: #28a745; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; }
+        .btn-delete { background: #dc3545; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <nav>
+        <span>Mihrace Kütüphanesi - ADMIN PANELI</span>
+        <button onclick="logout()" style="background:none; border:1px solid white; color:white; padding:5px 10px; cursor:pointer;">Çıkış Yap</button>
+    </nav>
 
-<input id="title" placeholder="Kitap adı">
-<button onclick="addBook()">Kitap Ekle</button>
+    <div class="container">
+        <div class="tab-container">
+            <button class="tab-btn active" onclick="showTab(event, 'books-sec')">Kitaplar</button>
+            <button class="tab-btn" onclick="showTab(event, 'authors-sec')">Yazarlar</button>
+            <button class="tab-btn" onclick="showTab(event, 'categories-sec')">Kategoriler</button>
+            <button class="tab-btn" onclick="showTab(event, 'penalties-sec')">Cezalar</button>
+            <button class="tab-btn" onclick="showTab(event, 'loans-sec')">Ödünç İşlemleri</button>
+        </div>
 
-<script src="js/admin.js"></script>
-<ul id="bookList"></ul>
+        <div id="books-sec" class="tab-content active">
+            <div class="section">
+                <h3>Yeni Kitap Ekle</h3>
+                <input type="text" id="title" placeholder="Kitap Adı">
+                <input type="number" id="isbn" placeholder="ISBN">
+                <input type="number" id="copies" placeholder="Kopya Sayısı">
+                <input type="number" id="year" placeholder="Yayın Yılı">
+                <button class="btn-add" onclick="addBook()">Kaydet</button>
+            </div>
+            <div class="section">
+                <h3>Kitap Listesi</h3>
+                <table id="booksTable">
+                    <thead><tr><th>ID</th><th>Başlık</th><th>Kopya</th><th>Yıl</th><th>İşlem</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="authors-sec" class="tab-content">
+            <div class="section">
+                <h3>Yeni Yazar Ekle</h3>
+                <input type="text" id="authorName" placeholder="Yazar Adı">
+                <button class="btn-add" onclick="addAuthor()">Yazar Kaydet</button>
+            </div>
+            <div class="section">
+                <table id="authorsTable">
+                    <thead><tr><th>ID</th><th>İsim</th><th>İşlem</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="categories-sec" class="tab-content">
+            <div class="section">
+                <h3>Yeni Kategori Ekle</h3>
+                <input type="text" id="catName" placeholder="Kategori Adı">
+                <button class="btn-add" onclick="addCategory()">Kategori Kaydet</button>
+            </div>
+            <div class="section">
+                <table id="categoriesTable">
+                    <thead><tr><th>ID</th><th>Ad</th><th>İşlem</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="penalties-sec" class="tab-content">
+    <div class="section">
+        <h3>Gecikme Cezaları</h3>
+        <table id="penaltiesTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Kullanıcı</th>
+                    <th>Kitap</th>
+                    <th>Miktar (TL)</th>
+                    <th>Sebep</th>
+                    <th>Durum</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+<div id="loans-sec" class="tab-content">
+    <div class="section">
+        <h3>Kitap Ödünç Ver</h3>
+        <p style="font-size: 0.8rem; color: #666;">Not: Test için iade süresi 1 dakika olarak ayarlanmıştır.</p>
+        <input type="number" id="loanUserId" placeholder="Kullanıcı ID">
+        <input type="number" id="loanBookId" placeholder="Kitap ID">
+        <button class="btn-add" onclick="createLoan()">Ödünç Ver</button>
+    </div>
+    <div class="section">
+        <h3>Ödünç Kayıtları</h3>
+        <table id="loansTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Kullanıcı</th>
+                    <th>Kitap</th>
+                    <th>Alım Tarihi</th>
+                    <th>Son İade</th>
+                    <th>Durum</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+    </div>
+
+    <script>
+        // TOKEN KONTROLÜ
+        const token = localStorage.getItem('token');
+        if (!token) { window.location.href = 'login.html'; }
+
+        // SAYFA İLK AÇILDIĞINDA KİTAPLARI GETİR
+        window.onload = () => { loadBooks(); };
+
+        // SEKME DEĞİŞTİRME
+        function showTab(event, tabId) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+
+            if(tabId === 'books-sec') loadBooks();
+            if(tabId === 'authors-sec') loadAuthors();
+            if(tabId === 'categories-sec') loadCategories();
+            if(tabId === 'penalties-sec') loadPenalties();
+        }
+
+        // --- KİTAP İŞLEMLERİ ---
+        async function loadBooks() {
+            const res = await fetch('http://localhost:8080/api/books', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const books = await res.json();
+            document.querySelector("#booksTable tbody").innerHTML = books.map(b => `
+                <tr><td>${b.bookId}</td><td>${b.title}</td><td>${b.available_copies}</td><td>${b.publication_year}</td>
+                <td><button class="btn-delete" onclick="deleteBook(${b.bookId})">Sil</button></td></tr>
+            `).join("");
+        }
+
+        async function addBook() {
+            const bookData = {
+                title: document.getElementById('title').value,
+                isbn: document.getElementById('isbn').value,
+                available_copies: document.getElementById('copies').value,
+                publication_year: document.getElementById('year').value
+            };
+            const res = await fetch('http://localhost:8080/api/books', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify(bookData)
+            });
+            if (res.ok) { alert("Kitap eklendi"); loadBooks(); }
+        }
+
+        async function deleteBook(id) {
+            if (!confirm("Emin misiniz?")) return;
+            const res = await fetch(`http://localhost:8080/api/books/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok) loadBooks();
+        }
+
+        // --- YAZAR İŞLEMLERİ ---
+        async function loadAuthors() {
+            const res = await fetch('http://localhost:8080/api/authors', { headers: {'Authorization': 'Bearer ' + token}});
+            const authors = await res.json();
+            document.querySelector("#authorsTable tbody").innerHTML = authors.map(a => `
+                <tr><td>${a.author_id}</td><td>${a.name}</td>
+                <td><button class="btn-delete" onclick="deleteAuthor(${a.author_id})">Sil</button></td></tr>
+            `).join("");
+        }
+
+        async function addAuthor() {
+            const name = document.getElementById('authorName').value;
+            await fetch('http://localhost:8080/api/authors', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+                body: JSON.stringify({ name: name })
+            });
+            loadAuthors();
+        }
+
+        async function deleteAuthor(id) {
+            if (!confirm("Emin misiniz?")) return;
+            await fetch(`http://localhost:8080/api/authors/${id}`, {
+                method: 'DELETE',
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+            loadAuthors();
+        }
+
+        // --- KATEGORİ İŞLEMLERİ ---
+        async function loadCategories() {
+            const res = await fetch('http://localhost:8080/api/categories', { headers: {'Authorization': 'Bearer ' + token}});
+            const categories = await res.json();
+            document.querySelector("#categoriesTable tbody").innerHTML = categories.map(c => `
+                <tr><td>${c.categoryId}</td><td>${c.name}</td>
+                <td><button class="btn-delete" onclick="deleteCategory(${c.categoryId})">Sil</button></td></tr>
+            `).join("");
+        }
+
+        async function addCategory() {
+            const name = document.getElementById('catName').value;
+            await fetch('http://localhost:8080/api/categories', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+                body: JSON.stringify({ name: name })
+            });
+            loadCategories();
+        }
+
+        async function deleteCategory(id) {
+            if (!confirm("Emin misiniz?")) return;
+            await fetch(`http://localhost:8080/api/categories/${id}`, {
+                method: 'DELETE',
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+            loadCategories();
+        }
+
+        // --- CEZA İŞLEMLERİ ---
+       async function loadPenalties() {
+    try {
+        const res = await fetch('http://localhost:8080/api/penalties', {
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+
+        if (!res.ok) throw new Error("Cezalar yüklenemedi");
+
+        const penalties = await res.json();
+        const tbody = document.querySelector("#penaltiesTable tbody");
+        tbody.innerHTML = "";
+
+        penalties.forEach(p => {
+            // Modelindeki ID ismine göre (penalty_ID veya id) düzenle
+            const pId = p.penalty_ID || p.id;
+            const isPaid = p.is_paid || p.paid; // is_paid alanını kontrol et
+
+            const row = `
+                <tr>
+                    <td>${pId}</td>
+                    <td>${p.loan.user.users_name}</td>
+                    <td>${p.loan.book.title}</td>
+                    <td>${p.penalty_amount} TL</td>
+                    <td>${p.penalty_reason}</td>
+                    <td>${isPaid ? '<span style="color:green">Ödendi</span>' : '<span style="color:red">Ödenmedi</span>'}</td>
+                    <td>
+                        ${!isPaid ? 
+                            `<button class="btn-add" style="background:#28a745; border:none;" onclick="payPenalty(${pId})">Öde</button>` 
+                            : '---'}
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    } catch (error) {
+        console.error("Cezalar yüklenirken hata:", error);
+    }
+}
+// CEZA ÖDEME FONKSİYONU
+async function payPenalty(penaltyId) {
+    if (!confirm("Cezanın tahsil edildiğini onaylıyor musunuz?")) return;
+
+    try {
+        // Backend adresin (PUT veya POST hangisini kullanıyorsan ona göre ayarla)
+        const res = await fetch(`http://localhost:8080/api/penalties/pay/${penaltyId}`, {
+            method: 'PUT', 
+            headers: { 
+                'Authorization': 'Bearer ' + localStorage.getItem('token') 
+            }
+        });
+
+        if (res.ok) {
+            alert("Ceza başarıyla ödendi olarak işaretlendi.");
+            loadPenalties(); // Tabloyu anında güncelle
+        } else {
+            const errorMsg = await res.text();
+            alert("Ödeme hatası: " + errorMsg);
+        }
+    } catch (error) {
+        console.error("Ödeme işlemi sırasında hata:", error);
+    }
+}
+        // --- ÖDÜNÇ ALMA SİSTEMİ ---
+
+async function loadLoans() {
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:8080/api/loans/tumoduncler', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(errorText || "Veri çekilemedi");
+        }
+
+        const loans = await res.json();
+        console.log("Gelen Ödünç Verileri:", loans);
+
+        const tbody = document.querySelector("#loansTable tbody");
+        tbody.innerHTML = ""; 
+
+        loans.forEach(l => {
+            // Java modelindeki loanId'yi yakalamak için tüm ihtimaller
+            const id = l.loanId || l.loanid || l.id;
+            const userName = l.user ? l.user.users_name : "Bilinmiyor";
+            const bookTitle = l.book ? l.book.title : "Bilinmiyor";
+            
+            // Tarihleri daha güvenli bir şekilde formatlayalım
+            const loanDate = l.loanDate ? new Date(l.loanDate).toLocaleDateString('tr-TR') : "-";
+            const dueDate = l.dueDate ? new Date(l.dueDate).toLocaleString('tr-TR') : "-";
+            const isReturned = l.returnDate !== null;
+
+            const row = `
+                <tr>
+                    <td>${id}</td>
+                    <td>${userName}</td>
+                    <td>${bookTitle}</td>
+                    <td>${loanDate}</td>
+                    <td>${dueDate}</td>
+                    <td>${isReturned ? '<span style="color:green">İade Edildi</span>' : '<span style="color:red">Kullanıcıda</span>'}</td>
+                    <td>
+                        ${!isReturned ? 
+                            `<button class="btn-add" style="background:#007bff" onclick="returnBook(${id})">İade Al</button>` 
+                            : '---'}
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+
+    } catch (error) {
+        console.error("Hata detayı:", error);
+        // Hata durumunda kullanıcıyı bilgilendirelim
+        const tbody = document.querySelector("#loansTable tbody");
+        if(tbody) tbody.innerHTML = `<tr><td colspan="7" style="color:red">Hata: ${error.message}</td></tr>`;
+    }
+}
+
+async function createLoan() {
+    const userId = document.getElementById('loanUserId').value;
+    const bookId = document.getElementById('loanBookId').value;
+
+    if(!userId || !bookId) return alert("Lütfen ID alanlarını doldurun!");
+
+    // Controller: POST /borrow?bookId=...&userId=...
+    const res = await fetch(`http://localhost:8080/api/loans/borrow?bookId=${bookId}&userId=${userId}`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token }
+    });
+
+    const result = await res.text(); // Hata mesajlarını okumak için text()
+
+    if (res.ok) {
+        alert("Ödünç verme işlemi başarılı!");
+        loadLoans();
+    } else {
+        alert("Hata: " + result); // Backend'den gelen "Kitap stokta yok" gibi mesajları gösterir
+    }
+}
+
+async function returnBook(loanId) {
+    if(!confirm("İade işlemini onaylıyor musunuz? (Gecikme varsa ceza kesilecektir)")) return;
+
+    // Controller: POST /return/{loanId}
+    const res = await fetch(`http://localhost:8080/api/loans/return/${loanId}`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token }
+    });
+
+    if (res.ok) {
+        alert("İade başarılı! Cezalar sekmesini kontrol edebilirsiniz.");
+        loadLoans();
+    } else {
+        const error = await res.text();
+        alert("İade hatası: " + errorText);
+    }
+}
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+    function showTab(event, tabId) {
+        // Tüm içerikleri gizle
+        document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+        // Tüm butonlardan active sınıfını kaldır
+        document.getElementById(tabId).style.display = 'block';
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        
+        // Seçilen tabı göster
+        const targetTab = document.getElementById(tabId);
+        if (targetTab) {
+            targetTab.style.display = 'block';
+        }
+        
+        // Tıklanan butona active sınıfı ekle
+        if (event && event.currentTarget) {
+            event.currentTarget.classList.add('active');
+        }
+
+        // Sekmeye göre verileri tetikle
+        if(tabId === 'books-sec') loadBooks();
+        if(tabId === 'authors-sec') loadAuthors();
+        if(tabId === 'categories-sec') loadCategories();
+        if(tabId === 'penalties-sec') loadPenalties();
+        if(tabId === 'loans-sec') loadLoans();
+    }
+    
+    // Diğer kodların...
+    document.addEventListener("DOMContentLoaded", () => {
+    loadLoans(); // Sayfa açılır açılmaz verileri çek
+});
+    </script>
+    
+</body>
+</html>
