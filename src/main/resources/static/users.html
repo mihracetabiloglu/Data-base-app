@@ -2,69 +2,285 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Kitap Listesi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kullanıcı Paneli - Kütüphane</title>
     <style>
-        body { font-family: sans-serif; background: #e9ecef; padding: 20px; }
-        .book-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        .card { background: white; padding: 15px; border-radius: 8px; text-align: center; }
-        .btn-borrow { background: #17a2b8; color: white; border: none; padding: 8px; cursor: pointer; }
+        .user-nav { background: #443725; color: rgb(227, 206, 160); padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .welcome-section { padding: 20px; background: #473424; border-bottom: 2px solid #dee2e6; margin-bottom: 20px; }
+        .status-badge { padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+        .status-overdue { background: #e74c3c; color: white; }
+        .status-ok { background: #2ecc71; color: white; }
+        .container { padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f2f2f2; }
     </style>
 </head>
 <body>
-    <h2>Hoş Geldiniz</h2>
-    <div id="books" class="book-list"></div>
+    <nav class="user-nav">
+        <h2>Kütüphane Sistemi</h2>
+        <div>
+            <span id="userNameDisplay" style="font-weight: bold;"></span>
+            <button onclick="logout()" style="background:#e74c3c; color:white; border:none; padding:8px 15px; cursor:pointer; margin-left:15px; border-radius:4px;">Çıkış Yap</button>
+        </div>
+    </nav>
+
+ <div class="welcome-section">
+    <h3 id="welcomeMsg">Hoş geldin!</h3>
+    <div style="display: flex; gap: 10px; margin-top: 15px;">
+        <input type="text" id="searchInput" placeholder="Kitap veya yazar ara..." 
+               style="flex: 1; padding: 12px; border: 2px solid #563c23; border-radius: 5px;">
+        <button onclick="loadAllBooks()" style="background:#3498db; color:white; border:none; padding:10px 20px; cursor:pointer; border-radius:5px;">
+            Kitapları Getir / Yenile
+        </button>
+    </div>
+</div>
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab(event, 'my-loans-sec')">Kitaplarım</button>
+            <button class="tab-btn" onclick="showTab(event, 'browse-books-sec')">Kitap Ödünç Al</button>
+        </div>
+
+        <div id="my-loans-sec" class="tab-content" style="display: block;">
+            <h3>Üzerimdeki Kitaplar</h3>
+            <table id="myLoansTable">
+                <thead>
+                    <tr>
+                        <th>Kitap Adı</th>
+                        <th>Alış Tarihi</th>
+                        <th>Son İade Tarihi</th>
+                        <th>Durum</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div id="browse-books-sec" class="tab-content" style="display: none;">
+            <h3>Ödünç Alınabilir Kitaplar</h3>
+            <table id="allBooksTable">
+                <thead>
+                    <tr>
+                        <th>Kitap Adı</th>
+                        <th>Yazar</th>
+                        <th>Mevcut Adet</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
 
     <script>
-        async function loadBooks() {
-            const response = await fetch('http://localhost:8080/api/books');
-            const books = await response.json();
-            document.getElementById('books').innerHTML = books.map(b => `
-                <div class="card">
-                    <h4>${b.title}</h4>
-                    <p>Mevcut: ${b.available_copies}</p>
-                    <button class="btn-borrow" onclick="borrow(${b.bookId})">Ödünç Al</button>
-                </div>
-            `).join("");
-        }
-        // KİTAP ÖDÜNÇ ALMA (POST İŞLEMİ)
-    async function borrowBook(bookId) {
-        // Backend'de userId parametresi de gerekiyordu
-        // Şimdilik test için userId=1 diyelim, normalde login olan kullanıcının ID'si olmalı
-        const userId = 1; //
+        // Sayfa yüklendiğinde çalışacaklar
+    document.addEventListener("DOMContentLoaded", () => {
+    const name = localStorage.getItem('userName');
+    const displayElement = document.getElementById('userNameDisplay');
+    const welcomeElement = document.getElementById('welcomeMsg');
 
-        try {
-            const response = await fetch(`http://localhost:8080/api/loans/borrow?bookId=${bookId}&userId=${userId}`, {
-                method: 'POST',
-                headers: { 
-                    'Authorization': 'Bearer ' + token 
-                }
-            });
+    if (name && name !== "undefined") {
+        displayElement.innerText = "Kullanıcı: " + name;
+        welcomeElement.innerText = "Hoş geldin, " + name + "!";
+    } else {
+        
+        console.error("Hata: LocalStorage'da userName bulunamadı!");
+        welcomeElement.innerText = "Hoş geldin!";
+    }     loadMyLoans();
+            loadAllBooks();
+        });
 
-            if (response.ok) {
-                alert("Kitap başarıyla ödünç alındı!");
-                loadBooks(); // Listeyi güncelle (kopya sayısı düşsün)
-            } else {
-                const errorMsg = await response.text();
-                alert("Hata: " + errorMsg);
+        // 1. Kendi Kitaplarımı Listele
+        async function loadMyLoans() {
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch('http://localhost:8080/api/loans/my-loans', {
+                    headers: { 'Authorization': 'Bearer ' + token ,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) throw new Error("Veri çekilemedi");
+                
+                const loans = await response.json();
+                const tbody = document.querySelector("#myLoansTable tbody");
+                tbody.innerHTML = "";
+
+                loans.forEach(loan => {
+                    // Teslim tarihi geçmiş mi kontrolü
+                    const isOverdue = new Date(loan.dueDate) < new Date() && !loan.returnDate;
+                    const loanId = loan.loanId || loan.loans_ID || 0;
+                    const row = `
+                        <tr>
+                            <td>${loan.book.title}</td>
+                            <td>${new Date(loan.loanDate).toLocaleDateString('tr-TR')}</td>
+                            <td>${new Date(loan.dueDate).toLocaleString('tr-TR')}</td>
+                            <td>
+                                <span class="status-badge ${isOverdue ? 'status-overdue' : 'status-ok'}">
+                                    ${isOverdue ? 'Süresi Geçti' : 'Kullanımda'}
+                                </span>
+                            </td>
+                            <td>
+                <button onclick="returnBook(${loanId})" class="btn-return">İade Et</button>
+            </td>
+                        </tr>`;
+                    tbody.innerHTML += row;
+                });
+            } catch (err) {
+                console.error("Kitaplarım yüklenemedi:", err);
             }
-        } catch (error) {
-            console.error("İstek hatası:", error);
         }
-    }
-    async function returnBook(loanId) {
-    const response = await fetch(`http://localhost:8080/api/loans/return/${loanId}`, {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + token }
-    });
 
-    if (response.ok) {
-        alert("Kitap iade edildi.");
-        // Gerekli listeleri yenile
+        async function loadAllBooks() {
+    try {
+        // Tarayıcı hafızasından giriş yaparken sakladığımız anahtarı alıyoruz
+        const token = localStorage.getItem('token'); 
+        
+        const res = await fetch('http://localhost:8080/api/books', {
+            method: 'GET', // Veri çekme isteği
+            headers: { 
+                // "Ben yetkiliyim" demek için anahtarı başlığa ekliyoruz
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (res.ok) {
+            const kitaplar = await res.json(); // Buradan token değil, kitap listesi gelir
+            console.log("Kitaplar başarıyla geldi:", kitaplar);
+            
+            const tbody = document.querySelector("#allBooksTable tbody");
+            tbody.innerHTML = ""; // Tabloyu temizle
+            kitaplar.forEach(book => {
+            
+               let yazar = "---";
+    if (book.authors && book.authors.length > 0) {
+        yazar = book.authors[0].name; // Postman'deki yapıya göre
+    }
+
+    // 2. Kitap ID'sini Postman'deki gibi 'bookId' olarak alalım
+    // Eğer bookId yoksa alternatif olarak books_ID deneyelim
+    const id = book.bookId || book.books_ID || 0;
+
+    const row = `
+        <tr>
+            <td>${book.title || 'Başlıksız'}</td>
+            <td>${yazar}</td>
+            <td>${book.available_copies ?? 0}</td>
+            <td>
+                <button onclick="borrowBook(${id})" class="btn-borrow">Ödünç Al</button>
+            </td>
+        </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+        } 
+     catch (err) {
+        console.error("Bağlantı hatası:", err);
+    }
+        }
+
+        // 3. Kitap Ödünç Al
+    async function borrowBook(bookId) {
+    const userId = localStorage.getItem('userId'); 
+ 
+    // Kontrol: Eğer userId yoksa kullanıcıyı uyaralım
+    if (!userId || userId === "undefined") {
+        alert("Kullanıcı kimliği bulunamadı. Lütfen bir kez çıkış yapıp tekrar girin.");
+        return;
+    }
+
+    if (!confirm("Bu kitabı ödünç almak istediğinize emin misiniz?")) return;
+
+    try {
+        const token = localStorage.getItem('token');
+        // 2. URL'deki parametre isimlerine dikkat (bookId ve userId)
+        const res = await fetch(`http://localhost:8080/api/loans/borrow?bookId=${bookId}&userId=${userId}`, {
+            method: 'POST',
+            headers: { 
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (res.ok) {
+            alert("Kitap başarıyla ödünç alındı!");
+            loadMyLoans();   // Üzerimdeki kitaplar listesini yenile
+            loadAllBooks();  // Kitap listesini (stok adedi için) yenile
+        } else {
+            const errorMsg = await res.text();
+            alert("Hata: " + errorMsg);
+        }
+    } catch (err) {
+        console.error("Ödünç alma hatası:", err);
+        alert("İşlem sırasında bir bağlantı hatası oluştu.");
     }
 }
+        // 4. Kitap İade Et
+        async function returnBook(loanId) {
+    if (!confirm("Bu kitabı iade etmek istediğinize emin misiniz?")) return;
 
-        loadBooks();
+    const token = localStorage.getItem('token');
+
+    try {
+        const res = await fetch(`http://localhost:8080/api/loans/return/${loanId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (res.ok) {
+            alert("Kitap başarıyla iade edildi!");
+            loadMyLoans();   // Listeyi yenile
+            loadAllBooks();  // Stok adedi arttığı için kitap listesini de yenile
+        } else {
+            const errorMsg = await res.text();
+            alert("Hata: " + errorMsg);
+        }
+    } catch (err) {
+        console.error("İade hatası:", err);
+        alert("Bağlantı hatası oluştu.");
+    }
+}
+        // Sekme Değiştirme Fonksiyonu
+        function showTab(event, tabId) {
+            const contents = document.getElementsByClassName('tab-content');
+            for (let content of contents) content.style.display = 'none';
+            
+            const buttons = document.getElementsByClassName('tab-btn');
+            for (let btn of buttons) btn.classList.remove('active');
+            
+            document.getElementById(tabId).style.display = 'block';
+            event.currentTarget.classList.add('active');
+        }
+document.addEventListener("DOMContentLoaded", () => {
+    // login.html'den userName olarak kaydettiğimizden emin olun
+    const name = localStorage.getItem('userName');
+    if (name && name !== "undefined") {
+        document.getElementById('userNameDisplay').innerText = "Kullanıcı: " + name;
+        document.getElementById('welcomeMsg').innerText = "Hoş geldin, " + name + "!";
+    }
+    loadMyLoans();
+    loadAllBooks();
+});
+
+// Arama kutusuna her harf girildiğinde otomatik çalışır
+document.getElementById('searchInput').addEventListener('input', function() {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#allBooksTable tbody tr');
+
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(filter) ? "" : "none";
+    });
+});
+        // Çıkış Yap
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
     </script>
-    <input type="text" id="searchInput" placeholder="Kitap ara..." onkeyup="searchBook()">
 </body>
 </html>

@@ -35,10 +35,13 @@ public class UsersController {
 
         Users user = usersService.login(loginData.getEmail(), loginData.getPassword());
         String token = jwtUtil.generateToken(user);
-        Map<String, String> response = new HashMap<>();
+        
+        Map<String, Object> response = new HashMap<>();
         response.put("token", token);
         response.put("role", user.getRole());
-        return ResponseEntity.ok(user);
+        response.put("userId", user.getUsers_ID());
+        response.put("userName", user.getUsers_name());
+        return ResponseEntity.ok(response);
     }
     @PreAuthorize("hasRole('ADMIN')")
     // SADECE ADMİN – TÜM KULLANICILARI LİSTELE

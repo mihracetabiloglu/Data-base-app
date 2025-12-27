@@ -33,47 +33,42 @@
     </div>
 
     <script>
-        async function handleLogin() {
+  async function handleLogin() {
+    // 1. Sayfanın yenilenmesini durdur
+    if (event) event.preventDefault(); 
+
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
     try {
-        const response = await fetch('http://localhost:8080/auth/login', {
+        // BURADA 'const res =' kısmına dikkat et
+        const res = await fetch('http://localhost:8080/api/users/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
 
-        if (response.ok) {
-            const data = await response.json();
-            
-            // Backend'den gelen veriyi konsolda görerek emin olalım
+        if (res.ok) {
+            const data = await res.json();
             console.log("Gelen veri:", data);
 
-            // Token'ı ve Rolü güvenli bir şekilde alalım
-            // Backend "ROLE_ADMIN" veya "ADMIN" dönebilir, ikisine de bakalım
-            const receivedToken = data.token || (typeof data === 'string' ? data : null);
-            const receivedRole = data.role;
+            // Postman'deki isimlerle BİREBİR aynı kaydetmeliyiz
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('role', data.role);
+            localStorage.setItem('userId', data.userId);   // Postman'de userId: 2 gelmiş
+            localStorage.setItem('userName', data.userName); // Postman'de userName: "Ayşe" gelmiş
 
-            if (receivedToken) {
-                localStorage.setItem('token', receivedToken);
-                localStorage.setItem('role', receivedRole);
-                
-                // Yönlendirme (Backend'den gelen ROLE_ kısmına dikkat!)
-                if (receivedRole === 'ADMIN' || receivedRole === 'ROLE_ADMIN') {
-                    window.location.href = 'admin.html';
-                } else {
-                    window.location.href = 'users.html';
-                }
+            // Yönlendirme
+            if (data.role === 'ADMIN') {
+                window.location.href = 'admin.html';
             } else {
-                alert("Token alınamadı, backend yanıtını kontrol edin.");
+                window.location.href = 'users.html';
             }
         } else {
-            alert("Giriş başarısız! Bilgilerinizi kontrol edin.");
+            alert("Giriş başarısız! Bilgileri kontrol edin.");
         }
     } catch (error) {
         console.error("Hata:", error);
-        alert("Sunucuya bağlanılamadı.");
     }
 }
     </script>

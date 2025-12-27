@@ -109,5 +109,9 @@ public Loan oduncAl(Long bookId, Long userId) {
         return loanRepository.findAll();
     }
 
+   public List<Loan> getLoansByUserId(Long userId) {
+    return loanRepository.findByUserId(userId); // Yeni metot ismini buraya yazdık
+}
+
 
 }
