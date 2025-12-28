@@ -5,19 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kullanıcı Paneli - Kütüphane</title>
     <style>
-        .user-nav { background: #443725; color: rgb(227, 206, 160); padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
-        .welcome-section { padding: 20px; background: #473424; border-bottom: 2px solid #dee2e6; margin-bottom: 20px; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #8f5d49ed;
+        }
+        .user-nav { background-image:url("img/kitap.jpg"); color: rgb(247, 242, 232); padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .welcome-section { padding: 20px; background-image:url("img/kitap.jpg"); border-bottom: 2px solid #ffffff; margin-bottom: 20px; }
         .status-badge { padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
-        .status-overdue { background: #e74c3c; color: white; }
+        .status-overdue { background: #751010; color: white; }
         .status-ok { background: #2ecc71; color: white; }
         .container { padding: 20px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        th, td { background-color: #482b18; color: #f8d4b5; border: 1px solid #8b5633; padding: 12px; text-align: left; }
+        th { background-color: #482b18;color:#f8d4b5 }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgb(255, 253, 253); }
         .modal-content { background: white; margin: 15% auto; padding: 20px; width: 300px; border-radius: 10px; text-align: center; }
         .btn-pay { background: #2ecc71; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
-        .btn-cancel { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        .btn-cancel { background: #e74c3c; color: rgb(34, 27, 16); border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -30,22 +36,22 @@
     </nav>
 
  <div class="welcome-section">
-    <h3 id="welcomeMsg">Hoş geldin!</h3>
-    <div style="display: flex; gap: 10px; margin-top: 15px;">
+    <h3 id="welcomeMsg" style="color: #fffdfb;">Hoş geldin!</h3>
+    <div style="display: flex; gap: 10px; margin-top: 15px; ">
         <input type="text" id="searchInput" placeholder="Kitap veya yazar ara..." 
-               style="flex: 1; padding: 12px; border: 2px solid #563c23; border-radius: 5px;">
-        <button onclick="loadAllBooks()" style="background:#3498db; color:white; border:none; padding:10px 20px; cursor:pointer; border-radius:5px;">
+               style="flex: 1; padding: 12px; border: 2px solid #fffdfb; border-radius: 5px;">
+        <button onclick="loadAllBooks()" style="background:#751010; color:white; border:none; padding:10px 20px; cursor:pointer; border-radius:5px;">
             Kitapları Getir / Yenile
         </button>
     </div>
 </div>
     <div class="container">
         <div class="tabs">
-            <button class="tab-btn active" onclick="showTab(event, 'my-loans-sec')">Kitaplarım</button>
-            <button class="tab-btn" onclick="showTab(event, 'browse-books-sec')">Kitap Ödünç Al</button>
+            <button class="tab-btn active" onclick="showTab(event, 'my-loans-sec')" style="background:#751010; color:white; border:none; padding:10px 20px; cursor:pointer; border-radius:5px;">Kitaplarım</button>
+            <button class="tab-btn" onclick="showTab(event, 'browse-books-sec')" style="background-color: #751010; color:white; border:none; padding:10px 20px; cursor:pointer; border-radius:5px;">Kitap Ödünç Al</button>
         </div>
 
-        <div id="my-loans-sec" class="tab-content" style="display: block;">
+        <div id="my-loans-sec" class="tab-content" style="display: block; background-color: #482b18; color: #f8d4b5; padding:7px; border-radius: 8px; margin-top: 10px;">
             <h3>Üzerimdeki Kitaplar</h3>
             <table id="myLoansTable">
                 <thead>
@@ -60,7 +66,7 @@
             </table>
         </div>
 
-        <div id="browse-books-sec" class="tab-content" style="display: none;">
+        <div id="browse-books-sec" class="tab-content" style="display: none;background-color: #482b18; color: #f8d4b5; padding:7px; border-radius: 8px; margin-top: 10px;">
             <h3>Ödünç Alınabilir Kitaplar</h3>
             <table id="allBooksTable">
                 <thead>

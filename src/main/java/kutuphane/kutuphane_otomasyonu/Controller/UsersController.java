@@ -24,6 +24,7 @@ public class UsersController {
     //  KULLANICI KAYIT
     @PostMapping("/register")
     public ResponseEntity<Users> register(@RequestBody Users user) {
+        user.setRole("USER");
         Users savedUser = usersService.registerUser(user);
         return ResponseEntity.ok(savedUser);
     }

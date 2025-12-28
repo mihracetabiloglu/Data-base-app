@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mihrace Kütüphanesi - Kayıt Ol</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-image: url('img/Kütüphanegirişarkaplan.jpg'); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; 
+        background-size: cover; background-position: center; background-repeat: no-repeat; background-attachment: fixed; }
+        .register-container { background-color: rgba(255, 226, 203, 0.419); padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 350px; }
+        h2 { text-align: center; color: #482b18; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #482b18; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #482b18; }
+        .login-link { text-align: center; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="register-container">
+    <h2>Yeni Kayıt</h2>
+    <input type="text" id="reg_name" placeholder="Ad Soyad" required>
+    <input type="email" id="reg_email" placeholder="E-posta" required>
+    <input type="password" id="reg_password" placeholder="Şifre" required>
+    <button onclick="registerUser()">Kayıt Ol</button>
+    <div class="login-link">
+        <a href="login.html" style="text-decoration: none; color: #482b18;">Zaten hesabın var mı? Giriş Yap</a>
+    </div>
+</div>
+
+<script>
+async function registerUser() {
+    const users_name = document.getElementById('reg_name').value;
+    const email = document.getElementById('reg_email').value;
+    const password = document.getElementById('reg_password').value;
+
+    if(!users_name || !email || !password) {
+        alert("Lütfen tüm alanları doldurun!");
+        return;
+    }
+
+    const userData = {
+        users_name: users_name,
+        email: email,
+        password: password
+    };
+
+    try {
+        const res = await fetch('http://localhost:8080/api/users/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData)
+        });
+
+        if (res.ok) {
+            alert("Kayıt Başarılı! Giriş ekranına yönlendiriliyorsunuz.");
+            window.location.href = "login.html";
+        } else {
+            const errorMsg = await res.text();
+            alert("Hata: " + errorMsg);
+        }
+    } catch (err) {
+        alert("Sunucuya bağlanılamadı.");
+    }
+}
+</script>
+
+</body>
+</html>
