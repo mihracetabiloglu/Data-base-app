@@ -62,47 +62,57 @@ public Loan oduncAl(Long bookId, Long userId) {
     loan.setLoanDate(LocalDate.now());
     loan.setDueDate(LocalDateTime.now().plusMinutes(1)); // 1 dakika ödünç süresi
     loan.setReturnDate(null);
-   mailService.sendMail(
-    "Yeni Ödünç Alma",
-    user.getUsers_name() + " adlı kullanıcı " + book.getTitle() + " kitabını ödünç aldı."
-);
+    mailService.sendMail(loan.getUser().getEmail(), "Kitap Ödünç Alma Onayı", 
+            "Sayın " + loan.getUser().getUsers_name() + ",\n\n" +
+            "Ödünç aldığınız '" + loan.getBook().getTitle() + "' iade süresi 1 dakikadır gecikme halinde her dakika " +
+            "için 10 tl ücret tahsil edilecektir." +
+            "\n\nKutuphane Otomasyonu");
     bookRepository.save(book);
     return loanRepository.save(loan);
  
 }
-    @Transactional
-  public void kitapIadeEt(Long loanId) {
 
+public double calculateFine(Long loanId) {
     Loan loan = loanRepository.findById(loanId)
             .orElseThrow(() -> new RuntimeException("Ödünç kaydı bulunamadı"));
-
-    // Zaten iade edilmiş mi?
-    if (loan.getReturnDate() != null) {
-        throw new RuntimeException("Bu kitap zaten iade edilmiş");
+    
+    LocalDateTime now = LocalDateTime.now();
+    if (now.isAfter(loan.getDueDate())) {
+        long lateMinutes = ChronoUnit.MINUTES.between(loan.getDueDate(), now);
+        return lateMinutes * 10.0; // Dakika başı 10 TL
     }
+    return 0.0;
+}
+
+@Transactional
+public void kitapIadeEt(Long loanId, boolean isFinePaid) {
+    Loan loan = loanRepository.findById(loanId).orElseThrow();
+    if (loan.getReturnDate() != null) throw new RuntimeException("Zaten iade edilmiş");
 
     loan.setReturnDate(LocalDateTime.now());
-
-    // Kitap stoğunu artır
-    Book book = loan.getBook();
-    book.setAvailable_copies(book.getAvailable_copies() + 1);
-
-    // Süre aşımı kontrolü
-    if (loan.getReturnDate().isAfter(loan.getDueDate())) {
-        long lateMinutes = ChronoUnit.MINUTES.between(loan.getDueDate(), loan.getReturnDate());
-        double penaltyAmount = lateMinutes * 10; // günlük 10 TL ceza
-
-       Penalties penalty = new Penalties();
-    penalty.setLoan(loan);
-    penalty.setPenalty_amount(penaltyAmount);
-    penalty.setPenalty_reason("Kitap " + lateMinutes + " dakika geç teslim edildi");
-    penalty.setIs_paid(false);
-    penaltiesRepository.save(penalty);
+    
+    // Ceza kaydı oluştur
+    double fineAmount = calculateFine(loanId);
+    if (fineAmount > 0) {
+        Penalties penalty = new Penalties();
+        penalty.setLoan(loan);
+        penalty.setPenalty_amount(fineAmount);
+        penalty.setPenalty_reason("Gecikme cezası");
+        penalty.setIs_paid(isFinePaid); // Web'den gelen onay bilgisi
+        penaltiesRepository.save(penalty);
+        mailService.sendMail(loan.getUser().getEmail(), "Kitap İade Onayı", 
+            "Sayın " + loan.getUser().getUsers_name() + ",\n\n" +
+            "Ödünç aldığınız '" + loan.getBook().getTitle() + "' kitabını iade ettiniz.\n" +
+            "Gecikme cezası: " + fineAmount + " TL.\n" +
+            (isFinePaid ? "Ceza ödemeniz alınmıştır. Teşekkür ederiz." : "Lütfen cezanızı en kısa sürede ödeyiniz.") +
+            "\n\nKutuphane Otomasyonu");
     }
 
+    Book book = loan.getBook();
+    book.setAvailable_copies(book.getAvailable_copies() + 1);
+    
     bookRepository.save(book);
     loanRepository.save(loan);
-    
 }
 
     public Object getAllLoans() {
@@ -110,7 +120,7 @@ public Loan oduncAl(Long bookId, Long userId) {
     }
 
    public List<Loan> getLoansByUserId(Long userId) {
-    return loanRepository.findByUserId(userId); // Yeni metot ismini buraya yazdık
+    return loanRepository.findByUserId(userId);
 }
 
 

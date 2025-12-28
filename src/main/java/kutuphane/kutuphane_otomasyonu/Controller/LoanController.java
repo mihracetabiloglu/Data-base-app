@@ -41,18 +41,29 @@ public class LoanController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')") // Hem User hem Admin ödünç alabilsin
-   // Kitap İade Et -> POST http://localhost:8080/api/loans/return/5 (5 buradaki loanId)
-    @PostMapping("/return/{loanId}")
-    public ResponseEntity<?> returnBook(@PathVariable Long loanId) {
-        try {
-            
-            loanService.kitapIadeEt(loanId);
-            return ResponseEntity.ok("Kitap başarıyla iade edildi. Ceza durumu kontrol edildi.");
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+
+@PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+@PostMapping("/return/{loanId}")
+public ResponseEntity<?> returnBook(@PathVariable Long loanId, @RequestParam(required = false) Boolean confirmPay) {
+    try {
+        // 1. Önce cezayı hesapla (İade almadan önce)
+        double fine = loanService.calculateFine(loanId);
+        
+        // 2. Eğer ceza varsa ve kullanıcı henüz "öde" (confirmPay) demediyse iadeyi yapma
+        if (fine > 0 && (confirmPay == null || !confirmPay)) {
+            // 402 Payment Required kodu ile ceza miktarını gönderiyoruz
+            return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(fine);
         }
+
+        // 3. Ceza yoksa veya kullanıcı ödemeyi onayladıysa iadeyi yap
+        loanService.kitapIadeEt(loanId, confirmPay != null && confirmPay);
+        return ResponseEntity.ok("Kitap iade edildi ve ceza ödemesi başarıyla tamamlandı.");
+        
+    } catch (RuntimeException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
+}
+
 @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
 @GetMapping("/my-loans")
 public ResponseEntity<?> getMyLoans() {

@@ -9,7 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToMany;
+
 import jakarta.persistence.Table;
 
 @Entity //Bu sınıfın bir tablo olduğunu veritabanına söyler
@@ -27,7 +27,7 @@ private int publication_year; //yayın yılı
 ////Bir kitap birden fazla yazar tutabiliri sağlayacak
 // 2. KİTAP - KATEGORİ İLİŞKİSİ (Basit @ManyToMany Yöntemi)
     // Spring Boot "book_categories" tablosunu OTOMATİK oluşturacak.
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(
         name = "book_categories", // Oluşacak ara tablonun adı
         joinColumns = @JoinColumn(name = "book_id"), // Bizim ID'miz
@@ -39,7 +39,7 @@ private int publication_year; //yayın yılı
     public Set<Category> getCategories() {
         return categories;
     }
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(
         name = "book_authors", // Ara tablo adı
         joinColumns = @JoinColumn(name = "book_id"),
@@ -83,5 +83,8 @@ public int getPublication_year() {
 }
 public void setPublication_year(int publication_year) {
     this.publication_year = publication_year;
+}
+public void setAuthors(Set<Author> kaliciYazarlar) {
+    this.authors = kaliciYazarlar;
 }
 }

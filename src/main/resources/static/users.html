@@ -14,6 +14,10 @@
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
         th { background-color: #f2f2f2; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 15% auto; padding: 20px; width: 300px; border-radius: 10px; text-align: center; }
+        .btn-pay { background: #2ecc71; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        .btn-cancel { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -71,7 +75,17 @@
             </table>
         </div>
     </div>
-
+   <div id="paymentModal" class="modal">
+    <div class="modal-content">
+        <h3>💳 Online Ceza Ödeme</h3>
+        <p id="fineText"></p>
+        <input type="text" placeholder="Kart Numarası (Simülasyon)" class="form-control mb-2">
+        <div class="modal-buttons">
+            <button id="payBtn" class="btn-pay">Öde ve İadeyi Tamamla</button>
+            <button onclick="closeModal()" class="btn-cancel">İptal</button>
+        </div>
+    </div>
+</div>
     <script>
         // Sayfa yüklendiğinde çalışacaklar
     document.addEventListener("DOMContentLoaded", () => {
@@ -110,7 +124,9 @@
                     // Teslim tarihi geçmiş mi kontrolü
                     const isOverdue = new Date(loan.dueDate) < new Date() && !loan.returnDate;
                     const loanId = loan.loanId || loan.loans_ID || 0;
+                    if (loan.returnDate === null){
                     const row = `
+                    
                         <tr>
                             <td>${loan.book.title}</td>
                             <td>${new Date(loan.loanDate).toLocaleDateString('tr-TR')}</td>
@@ -125,7 +141,7 @@
             </td>
                         </tr>`;
                     tbody.innerHTML += row;
-                });
+            }});
             } catch (err) {
                 console.error("Kitaplarım yüklenemedi:", err);
             }
@@ -216,20 +232,38 @@
         alert("İşlem sırasında bir bağlantı hatası oluştu.");
     }
 }
+let currentLoanId = null;
         // 4. Kitap İade Et
         async function returnBook(loanId) {
     if (!confirm("Bu kitabı iade etmek istediğinize emin misiniz?")) return;
-
+    currentLoanId = loanId
     const token = localStorage.getItem('token');
 
     try {
-        const res = await fetch(`http://localhost:8080/api/loans/return/${loanId}`, {
+        let res = await fetch(`http://localhost:8080/api/loans/return/${loanId}`, {
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json'
             }
         });
+        
+        if (res.status === 402) {
+            const fine = await res.text();
+            const confirmPay = confirm(`Toplam Gecikme Cezası: ${fine} TL.\n\nKredi kartınızla online ödeyip kitabı iade etmek istiyor musunuz?`);
+            
+            if (confirmPay) {
+                // Kullanıcı onayladıysa, ödeme yapıldı bilgisiyle (confirmPay=true) tekrar gönder
+                res = await fetch(`http://localhost:8080/api/loans/return/${loanId}?confirmPay=true`, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+            } else {
+                alert("İade işlemi iptal edildi. Ceza ödenmeden kitap iade edilemez.");
+                return;
+            }
+        }
+        
 
         if (res.ok) {
             alert("Kitap başarıyla iade edildi!");
@@ -239,11 +273,22 @@
             const errorMsg = await res.text();
             alert("Hata: " + errorMsg);
         }
-    } catch (err) {
+        
+    } 
+    
+    catch (err) {
         console.error("İade hatası:", err);
         alert("Bağlantı hatası oluştu.");
     }
 }
+// "Öde" butonuna basıldığında çalışacak olan:
+document.getElementById('payBtn').onclick = async function() {
+    const token = localStorage.getItem('token');
+    let res = await fetch(`http://localhost:8080/api/loans/return/${currentLoanId}?confirmPay=true`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token }
+    });}
+function closeModal() { document.getElementById('paymentModal').style.display = 'none'; }
         // Sekme Değiştirme Fonksiyonu
         function showTab(event, tabId) {
             const contents = document.getElementsByClassName('tab-content');

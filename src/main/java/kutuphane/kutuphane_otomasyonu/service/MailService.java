@@ -7,7 +7,15 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class MailService {
-     public void sendMail(String subject, String text) {
-        System.out.println("MAIL (mock): " + subject + " - " + text);
+    @Autowired
+    private JavaMailSender mailSender; // Gerçek mail göndericiyi enjekte et
+
+    public void sendMail(String to, String subject, String text) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to); // Alıcı adresi şart!
+        message.setSubject(subject);
+        message.setText(text);
+        mailSender.send(message); // Gerçek gönderim komutu
+        System.out.println("Mail başarıyla gönderildi: " + to);
     }
 }

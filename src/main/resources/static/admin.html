@@ -43,6 +43,9 @@
                 <input type="number" id="isbn" placeholder="ISBN">
                 <input type="number" id="copies" placeholder="Kopya Sayısı">
                 <input type="number" id="year" placeholder="Yayın Yılı">
+                <input type="text" id="categoryName" placeholder="Kategori Adı" required>
+                <input type="text" id="book_author" placeholder="Yazar Adı" required>
+    </select>
                 <button class="btn-add" onclick="addBook()">Kaydet</button>
             </div>
             <div class="section">
@@ -57,7 +60,7 @@
         <div id="authors-sec" class="tab-content">
             <div class="section">
                 <h3>Yeni Yazar Ekle</h3>
-                <input type="text" id="authorName" placeholder="Yazar Adı">
+                <input type="text" id="autname" placeholder="Yazar Adı">
                 <button class="btn-add" onclick="addAuthor()">Yazar Kaydet</button>
             </div>
             <div class="section">
@@ -163,18 +166,38 @@
         }
 
         async function addBook() {
+            const authorval = document.getElementById('book_author').value;
+            console.log("Gönderilen Yazar:", authorval); // BURAYA BAK! Eğer boşsa ID çakışması vardır.
+            const categoryName = document.getElementById('categoryName').value;
             const bookData = {
+                
                 title: document.getElementById('title').value,
                 isbn: document.getElementById('isbn').value,
                 available_copies: document.getElementById('copies').value,
-                publication_year: document.getElementById('year').value
+                publication_year: document.getElementById('year').value,
+                authors: [{ 
+        name: document.getElementById('book_author').value 
+    }],
+    categories: [{ 
+        name: document.getElementById('categoryName').value
+    }]
+                 
+                
             };
             const res = await fetch('http://localhost:8080/api/books', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                 body: JSON.stringify(bookData)
             });
-            if (res.ok) { alert("Kitap eklendi"); loadBooks(); }
+            if (res.ok) { alert("Kitap eklendi"); 
+            loadBooks();
+            loadAuthors();      // Yazar listesini yenile (yeni yazarın gelmesi için)
+            loadCategories();   // Kategori listesini yenile }
+        
+        document.getElementById('title').value = "";
+        document.getElementById('authorName').value = "";
+        document.getElementById('categoryName').value = "";
+        }
         }
 
         async function deleteBook(id) {
@@ -191,20 +214,23 @@
             const res = await fetch('http://localhost:8080/api/authors', { headers: {'Authorization': 'Bearer ' + token}});
             const authors = await res.json();
             document.querySelector("#authorsTable tbody").innerHTML = authors.map(a => `
-                <tr><td>${a.author_id}</td><td>${a.name}</td>
-                <td><button class="btn-delete" onclick="deleteAuthor(${a.author_id})">Sil</button></td></tr>
+                <tr><td>${a.author_ID}</td><td>${a.name}</td>
+                <td><button class="btn-delete" onclick="deleteAuthor(${a.author_ID})">Sil</button></td></tr>
             `).join("");
         }
 
         async function addAuthor() {
-            const name = document.getElementById('authorName').value;
-            await fetch('http://localhost:8080/api/authors', {
+            const name = document.getElementById('autname').value;
+            const res = await fetch('http://localhost:8080/api/authors', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
                 body: JSON.stringify({ name: name })
             });
+            if (res.ok) {
+           alert("Yazar başarıyla eklendi");
             loadAuthors();
         }
+    }
 
         async function deleteAuthor(id) {
             if (!confirm("Emin misiniz?")) return;
@@ -434,7 +460,6 @@ async function returnBook(loanId) {
         if(tabId === 'loans-sec') loadLoans();
     }
     
-    // Diğer kodların...
     document.addEventListener("DOMContentLoaded", () => {
     loadLoans(); // Sayfa açılır açılmaz verileri çek
 });
